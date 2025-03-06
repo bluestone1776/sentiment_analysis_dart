@@ -1,0 +1,34 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+class TextAnalyzer {
+  // Retrieve the API key from environment variables using a generic key name.
+  static String get _apiKey => dotenv.env['TEXT_ANALYZER_API_KEY'] ?? '';
+
+  // Determines if the provided text is appropriate by analyzing its sentiment.
+  static Future<bool> isTextAppropriate(String text) async {
+    // Replace this URL with your generic text analysis API endpoint.
+    final String apiUrl = 'https://api.example.com/analyzeSentiment?key=$_apiKey';
+
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'document': {'type': 'PLAIN_TEXT', 'content': text},
+        'encodingType': 'UTF8',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final sentimentScore = data['documentSentiment']['score'];
+      // If sentimentScore is less than -0.5, consider the text as having negative sentiment.
+      return sentimentScore >= -0.5;
+    } else {
+      // Log error and return false if the API call fails.
+      print('Error analyzing text: ${response.body}');
+      return false;
+    }
+  }
+}
